@@ -12,25 +12,22 @@ print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 
 sched = BackgroundScheduler()
-global CHAT_ID
 
 
-def send_message_by_scheldier():
+def send_message_by_scheldier(chat_id):
     print("Schediler")
-    global CHAT_ID
-    if CHAT_ID:
-        bot.send_message(chat_id=CHAT_ID, text="This message send you by scheduler")
+    bot.send_message(chat_id=chat_id, text="This message send you by scheduler")
 
 
-sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
               day='*', week='*', day_of_week='*',
               hour='*', minute='*', second=15)
 
-sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
               day='*', week='*', day_of_week='*',
               hour='*', minute='*', second=30)
 
-sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
               day='*', week='*', day_of_week='*',
               hour='*', minute='*', second=45)
 
@@ -40,10 +37,7 @@ sched.start()
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(message, 'Hello, ' + message.from_user.first_name)
-    global CHAT_ID
-    CHAT_ID = message.chat.id
-    print(CHAT_ID)
-    sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+    sched.add_job(send_message_by_scheldier, 'cron', args=[message.chat.id], year='*', month='*',
                   day='*', week='*', day_of_week='*',
                   hour='*', minute='*', second=50)
 
