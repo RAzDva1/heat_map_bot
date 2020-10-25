@@ -6,8 +6,8 @@ TOKEN_TG = os.getenv('TOKEN_TG_BOT', '')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
 
 bot = telebot.TeleBot(TOKEN_TG)
-print(TOKEN_TG)
-print(TOKEN_APP_HEROKU)
+print("TOKEN_TG", TOKEN_TG)
+print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 
 app = Flask(__name__)
 
@@ -37,12 +37,11 @@ def getMessage_():
     return "?", 200
 
 
-
 @app.route("/")
 def webhook():
     print("webhook")
     bot.remove_webhook()
-    bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG)
+    print("SET WEBHOOK", bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG))
     return "!", 200
 
 
