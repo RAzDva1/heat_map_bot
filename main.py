@@ -11,7 +11,7 @@ bot = telebot.TeleBot(TOKEN_TG)
 print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 
-sched = BackgroundScheduler()
+sched = BackgroundScheduler(deamon=True)
 
 
 def send_message_by_scheldier(chat_id):
@@ -46,7 +46,6 @@ def start(message):
 def echo_message(message):
     print("echo")
     bot.reply_to(message, message.text)
-    print(message)
 
 
 if HEROKU:
@@ -71,11 +70,13 @@ if HEROKU:
 
 
     if __name__ == "__main__":
+        print("run")
         app.run()
 
 
 else:
     print("LOCAL!!!")
     if __name__ == "__main__":
+        print("run")
         bot.remove_webhook()
         bot.polling()
