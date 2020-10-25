@@ -2,8 +2,8 @@ from flask import Flask, request
 import os
 import telebot
 
-TOKEN_TG = os.getenv('TOKEN_TG_BOT')
-TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU')
+TOKEN_TG = os.getenv('TOKEN_TG_BOT', '')
+TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
 
 bot = telebot.TeleBot(TOKEN_TG)
 print(TOKEN_TG)
@@ -41,7 +41,7 @@ def getMessage_():
 def webhook():
     print("webhook")
     bot.remove_webhook()
-    bot.set_webhook(url='https://{}.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG)
+    bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG)
     return "!", 200
 
 
