@@ -2,7 +2,7 @@ from flask import Flask, request
 import os
 import telebot
 
-TOKEN_TG = os.getenv('TOKEN_TG_BOT', '')
+TOKEN_TG = os.getenv('TOKEN_TG', '')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
 
 bot = telebot.TeleBot(TOKEN_TG)
