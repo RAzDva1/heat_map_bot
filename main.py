@@ -22,7 +22,7 @@ def echo_message(message):
     print("echo")
     bot.reply_to(message, message.text)
 
-'''
+
 @app.route('/', methods=['POST'])
 def getMessage():
     print("getMessage/")
@@ -35,14 +35,14 @@ def getMessage_():
     print("getMessage/token")
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "?", 200
-'''
+
 
 
 @app.route("/")
 def webhook():
     print("webhook")
-    #bot.remove_webhook()
-    #bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG)
+    bot.remove_webhook()
+    bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG)
     return "!", 200
 
 
