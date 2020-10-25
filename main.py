@@ -1,7 +1,6 @@
 from flask import Flask, request
 import os
 import telebot
-from apscheduler.schedulers.background import BackgroundScheduler
 
 TOKEN_TG = os.getenv('TOKEN_TG')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
@@ -11,35 +10,16 @@ bot = telebot.TeleBot(TOKEN_TG)
 print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 
-sched = BackgroundScheduler(deamon=True)
-
 
 def send_message_by_scheldier(chat_id):
     print("Schediler")
     bot.send_message(chat_id=chat_id, text="This message send you by scheduler")
 
 
-sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
-              day='*', week='*', day_of_week='*',
-              hour='*', minute='*', second=15)
-
-sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
-              day='*', week='*', day_of_week='*',
-              hour='*', minute='*', second=30)
-
-sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
-              day='*', week='*', day_of_week='*',
-              hour='*', minute='*', second=45)
-
-sched.start()
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(message, 'Hello, ' + message.from_user.first_name)
-    sched.add_job(send_message_by_scheldier, 'cron', args=[message.chat.id], year='*', month='*',
-                  day='*', week='*', day_of_week='*',
-                  hour='*', minute='*', second=50)
+
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
