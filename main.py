@@ -6,6 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 import requests
 import time
+import database_api as db
+import business_logic as bl
 
 TOKEN_TG = os.getenv('TOKEN_TG')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
@@ -24,6 +26,7 @@ print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 print("CHROME_BINARY", CHROME_BINARY)
 print("CHROME_DRIVER_PATH", CHROME_DRIVER_PATH)
+
 
 def get_heat_map(url):
     """Thi function make request to finviz and get link for heat-map"""
@@ -62,10 +65,12 @@ def get_heat_map_link(url):
     return url_png
 
 
-def send_message_by_scheldier(chat_id):
+def send_message_by_scheldier(list_chat_id):
     print("Schediler")
     url_png = get_heat_map(URL)
-    bot.send_message(chat_id=chat_id, text=url_png)
+    for chat_id in list_chat_id:
+        with open("image.png", 'rb') as image:
+                bot.send_photo(chat_id=chat_id[0], photo=image)
 
 
 sched = BackgroundScheduler(deamon=True)
@@ -78,24 +83,52 @@ sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', mon
 sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
               day='*', week='*', day_of_week='*',
               hour='*', minute='*', second=30)
-
-sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', month='*',
-              day='*', week='*', day_of_week='*',
-              hour='*', minute='*', second=45)
               '''
+
+sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+              day='*', week='*', day_of_week='*',
+              hour='10,16', minute=5, second=30)
+
 
 sched.start()
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.reply_to(message, 'Hello, ' + message.from_user.first_name)
-    sched.add_job(send_message_by_scheldier, 'cron', args=[message.chat.id], year='*', month='*',
-                  day='*', week='*', day_of_week='*',
-                  hour='*', minute='*', second=50)
+    print(message.from_user.language_code)
+    db_req = db.select_users_for_mail()
+    print(db_req)
+    for chat_id in db_req:
+        print(chat_id[0])
+    db.add_user(user_id=message.chat.id, lang_code=message.from_user.language_code)
+    keyboard = bl.create_keyboard_is_photo()
+    bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive  daily email?",
+                     reply_markup=keyboard)
+    bl.update_state(message, bl.ASK_USER)
 
 
-TEXT_HELP = "I can execute several commands: \n " \
+
+@bot.callback_query_handler(func=lambda x: bl.get_state(x.message) == bl.ASK_USER)
+def callback_handler_photo(callback_query):
+    message = callback_query.message
+    text = callback_query.data
+    if text == "Yes":
+        bot.send_message(chat_id=message.chat.id, text="Ok, we will send you HeatMap at 10.05 am and"
+                                                       "at 4.05 pm")
+        bl.update_state(message, bl.ADD_BD)
+        db.change_state_email(user_id=message.chat.id, is_mailing=True)
+    else:
+        bot.send_message(chat_id=message.chat.id, text="Ok, we won't send you HeatMap")
+    help(message)
+
+
+@bot.message_handler(commands=['stop'])
+def help(message):
+    db.change_state_email(user_id=message.chat.id, is_mailing=False)
+    bot.send_message(chat_id=message.chat.id, text="Ok, now we won't send you HeatMap")
+
+
+TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_d - S&P500 today \n" \
             "/SP500_w - S&P500 last week \n" \
             "/SP500_1m - S&P500 last month \n" \
@@ -103,24 +136,27 @@ TEXT_HELP = "I can execute several commands: \n " \
             "/SP500_6m - S&P500 last 6 months\n" \
             "/SP500_1y - S&P500 last year\n" \
             "/SP500_ydp - S&P500 year to date perfomance\n" \
-            "/help - commands list"
+            "/help - commands list\n" \
+            "/stop - stop sending daily HeatMap"
 
 
 @bot.message_handler(commands=['help'])
-def start(message):
+def help(message):
     bot.send_message(chat_id=message.chat.id, text=TEXT_HELP)
 
 
 @bot.message_handler(commands=['SP500_d'])
-def start(message):
+def sp500_d(message):
     url_png = get_heat_map(URL)
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 today")
         bot.send_photo(chat_id=message.chat.id, photo=image)
+    import datetime
+    print(datetime.datetime.now())
 
 
 @bot.message_handler(commands=['SP500_w'])
-def start(message):
+def sp500_w(message):
     url_png = get_heat_map(URL + '?t=sec&st=w1')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 last week")
@@ -128,7 +164,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_1m'])
-def start(message):
+def sp500_1m(message):
     url_png = get_heat_map(URL + '?t=sec&st=w4')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 last month")
@@ -136,7 +172,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_3m'])
-def start(message):
+def sp500_3m(message):
     url_png = get_heat_map(URL + '?t=sec&st=w13')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 last three months")
@@ -144,7 +180,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_6m'])
-def start(message):
+def sp500_6m(message):
     url_png = get_heat_map(URL + '?t=sec&st=w26')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 last six months")
@@ -152,7 +188,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_1y'])
-def start(message):
+def sp500_1y(message):
     url_png = get_heat_map(URL + '?t=sec&st=w52')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 last year")
@@ -160,7 +196,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_ydp'])
-def start(message):
+def sp500_ydp(message):
     url_png = get_heat_map(URL + '?t=sec&st=ytd')
     with open("image.png", 'rb') as image:
         bot.send_message(chat_id=message.chat.id, text="SP500 yaer to date perfomance")
@@ -168,7 +204,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_tst_link'])
-def start(message):
+def sp500_tst_link(message):
     start = time.time()
     amount = 20
     for _ in range(amount):
@@ -182,7 +218,7 @@ def start(message):
 
 
 @bot.message_handler(commands=['SP500_tst_file'])
-def start(message):
+def sp500_tst_file(message):
     start = time.time()
     amount = 20
     for _ in range(amount):
@@ -225,6 +261,7 @@ if HEROKU:
 
     if __name__ == "__main__":
         print("run")
+        db.init_db()
         app.run()
 
 
@@ -232,6 +269,7 @@ else:
     print("LOCAL!!!")
     if __name__ == "__main__":
         print("run")
+        db.init_db()
         bot.remove_webhook()
         bot.polling()
 

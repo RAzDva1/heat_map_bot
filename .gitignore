@@ -3,3 +3,5 @@ env/
 config_webhook.py
 *.png
 *.log
+*.db
+__pycache__/
