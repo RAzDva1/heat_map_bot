@@ -1,8 +1,5 @@
-import telebot
-import database_api as db
 from telebot import types
 from collections import defaultdict
-import os
 
 
 START, ASK_USER, ADD_BD = range(3)

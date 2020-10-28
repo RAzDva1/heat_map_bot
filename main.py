@@ -8,6 +8,7 @@ import requests
 import time
 import database_api as db
 import business_logic as bl
+import datetime
 
 TOKEN_TG = os.getenv('TOKEN_TG')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
@@ -240,6 +241,7 @@ def echo_message(message):
 
 if HEROKU:
     print("HEROKU!!!")
+    print("TIME: ", datetime.datetime.now())
 
     app = Flask(__name__)
 
@@ -256,15 +258,15 @@ if HEROKU:
         print("webhook")
         bot.remove_webhook()
         print("SET WEBHOOK", bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG))
+        db.init_db()
+        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='10,16', minute='5', second=30)
         return "!", 200
 
 
     if __name__ == "__main__":
         print("run")
-        db.init_db()
-        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
-                      day='*', week='*', day_of_week='*',
-                      hour='10,16', minute='5', second=30)
         app.run()
 
 
@@ -272,6 +274,7 @@ else:
     print("LOCAL!!!")
     if __name__ == "__main__":
         print("run")
+        print("TIME: ", datetime.datetime.now())
         db.init_db()
         sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                       day='*', week='*', day_of_week='*',
