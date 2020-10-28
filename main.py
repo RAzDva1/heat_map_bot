@@ -23,20 +23,31 @@ data = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
                       'Chrome/50.0.2661.102 Safari/537.36'}
 
 bot = telebot.TeleBot(TOKEN_TG)
+sched = BackgroundScheduler(deamon=True)
+sched.start()
+CHROME_OPTIONS = ''
 print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 print("CHROME_BINARY", CHROME_BINARY)
 print("CHROME_DRIVER_PATH", CHROME_DRIVER_PATH)
 
 
-def get_heat_map(url):
-    """Thi function make request to finviz and get link for heat-map"""
+def init_chrome_options():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.binary_location = CHROME_BINARY
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
     chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
-    driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH, options=chrome_options)
+    return chrome_options
+
+
+def get_chrome_options():
+    return CHROME_OPTIONS
+
+
+def get_heat_map(url):
+    """Thi function make request to finviz and get link for heat-map"""
+    driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH, options=get_chrome_options())
     driver.get(url)
     driver.find_element_by_id("share-map").click()
     element = WebDriverWait(driver, timeout=3).until(lambda d: d.find_element_by_id("static"))
@@ -51,12 +62,7 @@ def get_heat_map(url):
 
 def get_heat_map_link(url):
     """Thi function make request to finviz and get link for heat-map"""
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = CHROME_BINARY
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
-    chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
-    driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH, options=chrome_options)
+    driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH, options=get_chrome_options())
     driver.get(url)
     driver.find_element_by_id("share-map").click()
     element = WebDriverWait(driver, timeout=3).until(lambda d: d.find_element_by_id("static"))
@@ -74,13 +80,8 @@ def send_message_by_scheldier(list_chat_id):
             bot.send_photo(chat_id=chat_id[0], photo=image)
 
 
-sched = BackgroundScheduler(deamon=True)
-sched.start()
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
-    print(message.from_user.language_code)
     db_req = db.select_users_for_mail()
     print(db_req)
     for chat_id in db_req:
@@ -119,7 +120,7 @@ TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_3m - S&P500 last 3 months\n" \
             "/SP500_6m - S&P500 last 6 months\n" \
             "/SP500_1y - S&P500 last year\n" \
-            "/SP500_ydp - S&P500 year to date perfomance\n" \
+            "/SP500_ytd - S&P500 year to date\n" \
             "/help - commands list\n" \
             "/start - start sending daily HeatMap\n" \
             "/stop - stop sending daily HeatMap"
@@ -130,54 +131,24 @@ def help_f(message):
     bot.send_message(chat_id=message.chat.id, text=TEXT_HELP)
 
 
-# TODO Make one function for SP500_[]commands
-@bot.message_handler(commands=['SP500_d'])
+def switch_command(command):
+    return {
+        "/SP500_d": ['', 'today'],
+        "/SP500_w": ['?t=sec&st=w1', 'last week'],
+        "/SP500_1m": ['?t=sec&st=w4', 'last month'],
+        "/SP500_3m": ['?t=sec&st=w13', 'last three months'],
+        "/SP500_6m": ['?t=sec&st=w26', 'last six months'],
+        "/SP500_1y": ['?t=sec&st=w52', 'last year'],
+        "/SP500_ytd": ['?t=sec&st=ytd', 'year to date']
+    }.get(command, '')
+
+
+@bot.message_handler(commands=['SP500_d', 'SP500_w', 'SP500_1m', 'SP500_3m', 'SP500_6m', 'SP500_1y', 'SP500_ytd'])
 def sp500_d(message):
-    get_heat_map(URL)
+    get_heat_map(URL + switch_command(message.text)[0])
     with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 today")
-
-
-@bot.message_handler(commands=['SP500_w'])
-def sp500_w(message):
-    get_heat_map(URL + '?t=sec&st=w1')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 last week")
-
-
-@bot.message_handler(commands=['SP500_1m'])
-def sp500_1m(message):
-    get_heat_map(URL + '?t=sec&st=w4')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 last month")
-
-
-@bot.message_handler(commands=['SP500_3m'])
-def sp500_3m(message):
-    get_heat_map(URL + '?t=sec&st=w13')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 last three months")
-
-
-@bot.message_handler(commands=['SP500_6m'])
-def sp500_6m(message):
-    get_heat_map(URL + '?t=sec&st=w26')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 last six months")
-
-
-@bot.message_handler(commands=['SP500_1y'])
-def sp500_1y(message):
-    get_heat_map(URL + '?t=sec&st=w52')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 last year")
-
-
-@bot.message_handler(commands=['SP500_ydp'])
-def sp500_ydp(message):
-    get_heat_map(URL + '?t=sec&st=ytd')
-    with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 year to date")
+        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 {}".
+                       format(switch_command(message.text)[1]))
 
 
 @bot.message_handler(commands=['SP500_tst_link'])
@@ -220,6 +191,7 @@ if HEROKU:
     print("TIME: ", datetime.datetime.now())
 
     app = Flask(__name__)
+    CHROME_OPTIONS = init_chrome_options()
     db.init_db()
     sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                   day='*', week='*', day_of_week='*',
@@ -251,6 +223,7 @@ else:
     if __name__ == "__main__":
         print("run")
         print("TIME: ", datetime.datetime.now())
+        CHROME_OPTIONS = init_chrome_options()
         db.init_db()
         sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                       day='*', week='*', day_of_week='*',
