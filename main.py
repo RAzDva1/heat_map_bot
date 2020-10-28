@@ -26,6 +26,7 @@ print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
 print("CHROME_BINARY", CHROME_BINARY)
 print("CHROME_DRIVER_PATH", CHROME_DRIVER_PATH)
+print('HEROKU', HEROKU)
 
 
 def get_heat_map(url):
@@ -85,9 +86,7 @@ sched.add_job(send_message_by_scheldier, 'cron', args=[353688371], year='*', mon
               hour='*', minute='*', second=30)
               '''
 
-sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
-              day='*', week='*', day_of_week='*',
-              hour='10,16', minute=5, second=30)
+
 
 
 sched.start()
@@ -137,6 +136,7 @@ TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_1y - S&P500 last year\n" \
             "/SP500_ydp - S&P500 year to date perfomance\n" \
             "/help - commands list\n" \
+            "/start - start sending daily HeatMap\n" \
             "/stop - stop sending daily HeatMap"
 
 
@@ -262,6 +262,9 @@ if HEROKU:
     if __name__ == "__main__":
         print("run")
         db.init_db()
+        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='10,16', minute='5', second=30)
         app.run()
 
 
@@ -270,6 +273,9 @@ else:
     if __name__ == "__main__":
         print("run")
         db.init_db()
+        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='10,16', minute='5', second=30)
         bot.remove_webhook()
         bot.polling()
 
