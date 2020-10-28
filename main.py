@@ -113,6 +113,17 @@ def stop(message):
     bot.send_message(chat_id=message.chat.id, text="Ok, now we won't send you HeatMap")
 
 
+@bot.message_handler(commands=['schedule'])
+def help_f(message):
+    bot.send_message(chat_id=message.chat.id, text="#TODO")
+    users = db.select_users_for_mail()
+    text = ""
+    for user in users:
+        text += str(user[0]) + " "
+    bot.send_message(chat_id=message.chat.id, text=text)
+
+
+
 TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_d - S&P500 today \n" \
             "/SP500_w - S&P500 last week \n" \
@@ -123,7 +134,8 @@ TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_ytd - S&P500 year to date\n" \
             "/help - commands list\n" \
             "/start - start sending daily HeatMap\n" \
-            "/stop - stop sending daily HeatMap"
+            "/stop - stop sending daily HeatMap\n" \
+            "/schedule - custom time to get HeatMap"
 
 
 @bot.message_handler(commands=['help'])
