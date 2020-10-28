@@ -244,6 +244,10 @@ if HEROKU:
     print("TIME: ", datetime.datetime.now())
 
     app = Flask(__name__)
+    db.init_db()
+    sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+                  day='*', week='*', day_of_week='*',
+                  hour='7,13', minute='5', second=30)
 
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
@@ -258,10 +262,6 @@ if HEROKU:
         print("webhook")
         bot.remove_webhook()
         print("SET WEBHOOK", bot.set_webhook(url='https://{}.herokuapp.com/'.format(TOKEN_APP_HEROKU) + TOKEN_TG))
-        db.init_db()
-        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
-                      day='*', week='*', day_of_week='*',
-                      hour='10,16', minute='5', second=30)
         return "!", 200
 
 

@@ -58,6 +58,6 @@ def change_state_email(conn, user_id: int, is_mailing: bool):
 @ensure_connection
 def select_users_for_mail(conn):
     c = conn.cursor()
-    c.execute('SELECT user_id FROM user_mail WHERE is_mailing = TRUE')
+    c.execute('SELECT user_id FROM user_mail WHERE is_mailing = (?)', (True, ))
     conn.commit()
     return c.fetchall()
