@@ -120,7 +120,7 @@ def help_f(message):
     text = ""
     for user in users:
         text += str(user[0]) + " "
-    bot.send_message(chat_id=message.chat.id, text=text)
+    bot.send_message(chat_id=353688371, text=text)
 
 
 
