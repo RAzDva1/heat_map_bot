@@ -80,6 +80,13 @@ def send_message_by_scheldier(list_chat_id):
             bot.send_photo(chat_id=chat_id[0], photo=image)
 
 
+def non_sleep_request():
+    print("Schediler")
+    r = requests.get("https://api.telegram.org/bot{}/getUpdates".format(TOKEN_TG))
+    print(r)
+
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     db_req = db.select_users_for_mail()
@@ -207,8 +214,10 @@ if HEROKU:
     db.init_db()
     sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                   day='*', week='*', day_of_week='*',
-                  hour='7,13', minute='5', second=30)
-
+                  hour='7,10,11,14,16,20,13', minute='5', second=30)
+    sched.add_job(non_sleep_request, 'cron', year='*', month='*',
+                  day='*', week='*', day_of_week='*',
+                  hour='*', minute='0,20,40', second=30)
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
     def get_message():
