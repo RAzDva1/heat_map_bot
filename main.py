@@ -23,8 +23,7 @@ data = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
                       'Chrome/50.0.2661.102 Safari/537.36'}
 
 bot = telebot.TeleBot(TOKEN_TG)
-sched = BackgroundScheduler(deamon=True)
-sched.start()
+
 CHROME_OPTIONS = ''
 print("TOKEN_TG", TOKEN_TG)
 print("TOKEN_APP_HEROKU", TOKEN_APP_HEROKU)
@@ -78,13 +77,6 @@ def send_message_by_scheldier(list_chat_id):
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
             bot.send_photo(chat_id=chat_id[0], photo=image)
-
-
-def non_sleep_request():
-    print("Schediler")
-    r = requests.get("https://api.telegram.org/bot{}/getUpdates".format(TOKEN_TG))
-    print(r)
-
 
 
 @bot.message_handler(commands=['start'])
@@ -212,12 +204,17 @@ if HEROKU:
     app = Flask(__name__)
     CHROME_OPTIONS = init_chrome_options()
     db.init_db()
+    sched = BackgroundScheduler(deamon=True)
     sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                   day='*', week='*', day_of_week='*',
-                  hour='7,10,11,14,16,20,13', minute='5', second=30)
-    sched.add_job(non_sleep_request, 'cron', year='*', month='*',
-                  day='*', week='*', day_of_week='*',
-                  hour='*', minute='0,20,40', second=30)
+                  hour='*', minute='*', second=30)
+    sched.start()
+
+
+    @app.route("/plug")
+    def webhook():
+        print("plug")
+        return "!", 200
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
     def get_message():
@@ -246,9 +243,14 @@ else:
         print("TIME: ", datetime.datetime.now())
         CHROME_OPTIONS = init_chrome_options()
         db.init_db()
+        sched = BackgroundScheduler(deamon=True)
         sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                       day='*', week='*', day_of_week='*',
-                      hour='10,16', minute='5', second=30)
+                      hour='10,16', minute='*', second=30)
+        sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='*', minute='*', second='20,30,40,50')
+        sched.start()
         bot.remove_webhook()
         bot.polling()
 
