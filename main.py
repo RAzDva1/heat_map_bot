@@ -212,9 +212,9 @@ if HEROKU:
 
 
     @app.route("/plug")
-    def webhook():
+    def plug():
         print("plug")
-        return "!", 200
+        return "!!!", 200
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
     def get_message():
