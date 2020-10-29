@@ -73,6 +73,7 @@ def get_heat_map_link(url):
 
 def send_message_by_scheldier(list_chat_id):
     print("Schediler")
+    print(list_chat_id)
     get_heat_map(URL)
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
@@ -242,7 +243,7 @@ else:
         print("run")
         print("TIME: ", datetime.datetime.now())
         CHROME_OPTIONS = init_chrome_options()
-        db.init_db()
+        db.init_db(force=True)
         sched = BackgroundScheduler(deamon=True)
         sched.add_job(send_message_by_scheldier, 'cron', args=[db.select_users_for_mail()], year='*', month='*',
                       day='*', week='*', day_of_week='*',

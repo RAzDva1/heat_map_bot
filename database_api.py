@@ -27,7 +27,9 @@ def init_db(conn, force: bool = False):
             lang_code   VARCHAR(10)
         )
     ''')
+    add_chat_for_init()
     conn.commit()
+
 
 
 @ensure_connection
@@ -61,3 +63,11 @@ def select_users_for_mail(conn):
     c.execute('SELECT user_id FROM user_mail WHERE is_mailing = (?)', (True, ))
     conn.commit()
     return c.fetchall()
+
+
+@ensure_connection
+def add_chat_for_init(conn):
+    c = conn.cursor()
+    c.execute('INSERT INTO user_mail (user_id, is_mailing, time_add, lang_code) VALUES (?, ?, ?, ?)',
+              (-484322978, True, datetime.datetime.now(), "ru"))
+    conn.commit()
