@@ -209,8 +209,11 @@ if HEROKU:
     db.init_db()
     sched = BackgroundScheduler(deamon=True)
     sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+                  day='*', week='*', day_of_week='1-5',
+                  hour='10,16', minute='05', second=30)
+    sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                   day='*', week='*', day_of_week='*',
-                  hour='*', minute='05', second=30)
+                  hour='*', minute='05', second=0)
     sched.start()
 
 
