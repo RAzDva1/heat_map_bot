@@ -31,7 +31,6 @@ print("CHROME_BINARY", CHROME_BINARY)
 print("CHROME_DRIVER_PATH", CHROME_DRIVER_PATH)
 
 
-
 def init_chrome_options():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.binary_location = CHROME_BINARY
@@ -80,16 +79,6 @@ def send_message_by_scheldier():
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
             bot.send_photo(chat_id=chat_id[0], photo=image)
-
-
-sched = BackgroundScheduler(deamon=True)
-sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-                      day='*', week='*', day_of_week='*',
-                      hour='10,16', minute='*', second=30)
-sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-                      day='*', week='*', day_of_week='*',
-                      hour='*', minute='*', second='0,10,20,30,40,50')
-sched.start()
 
 
 @bot.message_handler(commands=['start'])
@@ -257,7 +246,14 @@ else:
         print("TIME: ", datetime.datetime.now())
         CHROME_OPTIONS = init_chrome_options()
         db.init_db()
-
+        sched = BackgroundScheduler(deamon=True)
+        sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='10,16', minute='*', second=30)
+        sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='*', minute='*', second='0,10,20,30,40,50')
+        sched.start()
         bot.remove_webhook()
         bot.polling()
 
