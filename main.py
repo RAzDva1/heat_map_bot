@@ -123,7 +123,6 @@ def help_f(message):
     bot.send_message(chat_id=353688371, text=text)
 
 
-
 TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_d - S&P500 today \n" \
             "/SP500_w - S&P500 last week \n" \
@@ -216,6 +215,7 @@ if HEROKU:
     def plug():
         print("plug")
         return "!!!", 200
+
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
     def get_message():

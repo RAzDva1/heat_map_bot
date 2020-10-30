@@ -31,7 +31,6 @@ def init_db(conn, force: bool = False):
     conn.commit()
 
 
-
 @ensure_connection
 def add_user(conn, user_id: int, lang_code: str):
     c = conn.cursor()
