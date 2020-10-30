@@ -153,11 +153,12 @@ def switch_command(command):
         "/SP500_6m": ['?t=sec&st=w26', 'last six months'],
         "/SP500_1y": ['?t=sec&st=w52', 'last year'],
         "/SP500_ytd": ['?t=sec&st=ytd', 'year to date']
-    }.get(command, '')
+    }.get(command, ['', 'today'])
 
 
 @bot.message_handler(commands=['SP500_d', 'SP500_w', 'SP500_1m', 'SP500_3m', 'SP500_6m', 'SP500_1y', 'SP500_ytd'])
 def sp500_d(message):
+    print("SW:", switch_command(message.text))
     get_heat_map(URL + switch_command(message.text)[0])
     with open("image.png", 'rb') as image:
         bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 {}".
@@ -252,7 +253,7 @@ else:
                       hour='10,16', minute='*', second=30)
         sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                       day='*', week='*', day_of_week='*',
-                      hour='*', minute='*', second='0,10,20,30,40,50')
+                      hour='*', minute='*', second='50')
         sched.start()
         bot.remove_webhook()
         bot.polling()
