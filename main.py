@@ -72,14 +72,27 @@ def get_heat_map_link(url):
     return url_png
 
 
-def send_message_by_scheldier():
+def switch_command(command):
+    return {
+        "/SP500_d": ['', 'today'],
+        "/SP500_w": ['?t=sec&st=w1', 'last week'],
+        "/SP500_1m": ['?t=sec&st=w4', 'last month'],
+        "/SP500_3m": ['?t=sec&st=w13', 'last three months'],
+        "/SP500_6m": ['?t=sec&st=w26', 'last six months'],
+        "/SP500_1y": ['?t=sec&st=w52', 'last year'],
+        "/SP500_ytd": ['?t=sec&st=ytd', 'year to date']
+    }.get(command, ['', 'today'])
+
+
+def send_message_by_scheldier(command=''):
     print("Schediler")
+    print(command)
     list_chat_id = db.select_users_for_mail()
     print(list_chat_id)
-    get_heat_map(URL)
+    get_heat_map(URL + switch_command(command)[0])
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
-            bot.send_photo(chat_id=chat_id[0], photo=image)
+            bot.send_photo(chat_id=chat_id[0], photo=image, caption='end of week' if command == '/SP500_w' else '')
 
 
 @bot.message_handler(commands=['start'])
@@ -91,7 +104,8 @@ def start(message):
     db.add_user(user_id=message.chat.id, lang_code=message.from_user.language_code,
                 first_name=message.from_user.first_name)
     keyboard = bl.create_keyboard_is_photo()
-    bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive  daily email?",
+    bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive daily email at 10.05 am and at "
+                                                   "4.05 pm",
                      reply_markup=keyboard)
     bl.update_state(message, bl.ASK_USER)
 
@@ -116,16 +130,6 @@ def stop(message):
     bot.send_message(chat_id=message.chat.id, text="Ok, now we won't send you HeatMap")
 
 
-@bot.message_handler(commands=['schedule'])
-def help_f(message):
-    bot.send_message(chat_id=message.chat.id, text="#TODO")
-    users = db.select_users_for_mail()
-    text = "users:"
-    for user in users:
-        text += str(user[0]) + " "
-    bot.send_message(chat_id=353688371, text=text)
-
-
 TEXT_HELP = "I can execute several commands: \n" \
             "/SP500_d - S&P500 today \n" \
             "/SP500_w - S&P500 last week \n" \
@@ -137,24 +141,21 @@ TEXT_HELP = "I can execute several commands: \n" \
             "/help - commands list\n" \
             "/start - start sending daily HeatMap\n" \
             "/stop - stop sending daily HeatMap\n" \
-            "/schedule - custom time to get HeatMap"
+            "/info - don't touch here :)"
+
+
+@bot.message_handler(commands=['info'])
+def info(message):
+    text = "Ok, you can send me you suggestions about improving this bot.\n" \
+           "Also if you have interest ideas about automating actions in stock market by bots, " \
+           "that really excite you, so write me, and we implement them together!\n" \
+           "With best regards, @RazDva_12"
+    bot.send_message(chat_id=message.chat.id, text=text)
 
 
 @bot.message_handler(commands=['help'])
 def help_f(message):
     bot.send_message(chat_id=message.chat.id, text=TEXT_HELP)
-
-
-def switch_command(command):
-    return {
-        "/SP500_d": ['', 'today'],
-        "/SP500_w": ['?t=sec&st=w1', 'last week'],
-        "/SP500_1m": ['?t=sec&st=w4', 'last month'],
-        "/SP500_3m": ['?t=sec&st=w13', 'last three months'],
-        "/SP500_6m": ['?t=sec&st=w26', 'last six months'],
-        "/SP500_1y": ['?t=sec&st=w52', 'last year'],
-        "/SP500_ytd": ['?t=sec&st=ytd', 'year to date']
-    }.get(command, ['', 'today'])
 
 
 @bot.message_handler(commands=['SP500_d', 'SP500_w', 'SP500_1m', 'SP500_3m', 'SP500_6m', 'SP500_1y', 'SP500_ytd'])
@@ -215,6 +216,9 @@ if HEROKU:
     sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                   day='*', week='*', day_of_week='*',
                   hour='*', minute='05', second=0)
+    sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_w'], year='*', month='*',
+                  day='*', week='*', day_of_week='5',
+                  hour='20', minute='5', second='10')
     sched.start()
 
 
@@ -231,6 +235,7 @@ if HEROKU:
             {'designation': 'Present of russian user',
              'value': '{}%'.format(round(amount_russians_users / amount_all_usres * 100, 2))}
         ])
+
 
     @app.route("/plug")
     def plug():
@@ -266,20 +271,18 @@ else:
         CHROME_OPTIONS = init_chrome_options()
         db.init_db()
         sched = BackgroundScheduler(deamon=True)
-        sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+        sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_d'], year='*', month='*',
                       day='*', week='*', day_of_week='*',
                       hour='10,16', minute='*', second=30)
-        #sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-        #              day='*', week='*', day_of_week='*',
-        #              hour='*', minute='*', second='50')
+        sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='*', minute='35', second='50')
+        sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_w'], year='*', month='*',
+                      day='*', week='*', day_of_week='*',
+                      hour='*', minute='5', second='20')
         sched.start()
         bot.remove_webhook()
         bot.polling()
-
-
-
-
-
 
 # TODO
 ''' 
