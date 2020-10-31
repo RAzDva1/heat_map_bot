@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>bot_admin</title>
+</head>
+<body>
+    <h2>A bit of Analytics</h2>
+    {% for record  in content %}
+    <p>{{record.designation}}: <b>{{record.value}} </b></p>
+    {% endfor %}
+</body>
+</html>

@@ -38,19 +38,19 @@ def init_db(conn, force: bool = False):
 @ensure_connection
 def add_user(conn, user_id: int, lang_code: str, first_name: str):
     c = conn.cursor()
-    c.execute('SELECT COUNT(*) FROM user_mail WHERE user_id = %s', (user_id, ))
+    c.execute('SELECT COUNT(*) FROM user_mail WHERE user_id = %s', (user_id,))
     num = c.fetchone()
     if not num[0]:
         c.execute('INSERT INTO user_mail (user_id, is_mailing, time_add, lang_code, first_name) '
                   'VALUES (%s, %s, %s, %s, %s)',
-              (user_id, False,  datetime.datetime.now(), lang_code, first_name))
+                  (user_id, False, datetime.datetime.now(), lang_code, first_name))
         conn.commit()
 
 
 @ensure_connection
 def change_state_email(conn, user_id: int, is_mailing: bool):
     c = conn.cursor()
-    c.execute('UPDATE  user_mail SET is_mailing=%s WHERE user_id = %s', (is_mailing, user_id, ))
+    c.execute('UPDATE  user_mail SET is_mailing=%s WHERE user_id = %s', (is_mailing, user_id,))
     conn.commit()
 
 
@@ -67,3 +67,24 @@ def add_chat_for_init(conn):
     c.execute('INSERT INTO user_mail (user_id, is_mailing, time_add, lang_code) VALUES (%s, %s, %s, %s)',
               (-484322978, True, datetime.datetime.now(), "ru"))
     conn.commit()
+
+
+@ensure_connection
+def get_count_all_users(conn):
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM user_mail')
+    return c.fetchone()
+
+
+@ensure_connection
+def get_count_active_users(conn):
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM user_mail WHERE is_mailing = TRUE')
+    return c.fetchone()
+
+
+@ensure_connection
+def get_count_russian_users(conn):
+    c = conn.cursor()
+    c.execute(r'SELECT COUNT(*) FROM user_mail WHERE lang_code = %s', ('ru', ))
+    return c.fetchone()

@@ -9,6 +9,7 @@ import time
 import database_api as db
 import business_logic as bl
 import datetime
+from flask import render_template
 
 TOKEN_TG = os.getenv('TOKEN_TG')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
@@ -217,6 +218,20 @@ if HEROKU:
     sched.start()
 
 
+    @app.route("/admino4ka")
+    def admin():
+        print("admino4ka")
+        amount_all_usres = db.get_count_all_users()[0]
+        amount_active_usres = db.get_count_active_users()[0]
+        amount_russians_users = db.get_count_russian_users()[0]
+
+        return render_template('index.html', content=[
+            {'designation': 'Amount of all users', 'value': amount_all_usres},
+            {'designation': 'Amount of active users', 'value': amount_active_usres},
+            {'designation': 'Present of russian user',
+             'value': '{}%'.format(round(amount_russians_users / amount_all_usres * 100, 2))}
+        ])
+
     @app.route("/plug")
     def plug():
         print("plug")
@@ -254,12 +269,17 @@ else:
         sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                       day='*', week='*', day_of_week='*',
                       hour='10,16', minute='*', second=30)
-        sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-                      day='*', week='*', day_of_week='*',
-                      hour='*', minute='*', second='50')
+        #sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
+        #              day='*', week='*', day_of_week='*',
+        #              hour='*', minute='*', second='50')
         sched.start()
         bot.remove_webhook()
         bot.polling()
+
+
+
+
+
 
 # TODO
 ''' 
