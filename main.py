@@ -104,8 +104,8 @@ def start(message):
     db.add_user(user_id=message.chat.id, lang_code=message.from_user.language_code,
                 first_name=message.from_user.first_name)
     keyboard = bl.create_keyboard_is_photo()
-    bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive daily email at 10.05 am and at "
-                                                   "4.05 pm",
+    bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive daily email at 10.05 am, "
+                                                   "4.05 pm and in Friday at 23.05 pm (week frame)",
                      reply_markup=keyboard)
     bl.update_state(message, bl.ASK_USER)
 
@@ -115,8 +115,7 @@ def callback_handler_photo(callback_query):
     message = callback_query.message
     text = callback_query.data
     if text == "Yes":
-        bot.send_message(chat_id=message.chat.id, text="Ok, we will send you HeatMap at 10.05 am and"
-                                                       "at 4.05 pm")
+        bot.send_message(chat_id=message.chat.id, text="Ok, we will send you daily HeatMap")
         bl.update_state(message, bl.ADD_BD)
         db.change_state_email(user_id=message.chat.id, is_mailing=True)
     else:
@@ -213,9 +212,6 @@ if HEROKU:
     sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                   day='*', week='*', day_of_week='1-5',
                   hour='10,16', minute='05', second=30)
-    sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-                  day='*', week='*', day_of_week='*',
-                  hour='*', minute='05', second=0)
     sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_w'], year='*', month='*',
                   day='*', week='*', day_of_week='5',
                   hour='20', minute='5', second='10')
