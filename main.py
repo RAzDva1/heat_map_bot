@@ -97,10 +97,6 @@ def send_message_by_scheldier(command=''):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    db_req = db.select_users_for_mail()
-    print(db_req)
-    for chat_id in db_req:
-        print(chat_id[0])
     db.add_user(user_id=message.chat.id, lang_code=message.from_user.language_code,
                 first_name=message.from_user.first_name)
     keyboard = bl.create_keyboard_is_photo()
@@ -140,7 +136,7 @@ TEXT_HELP = "I can execute several commands: \n" \
             "/help - commands list\n" \
             "/start - start sending daily HeatMap\n" \
             "/stop - stop sending daily HeatMap\n" \
-            "/info - don't touch here :)"
+            "/info - better do not touch it:)"
 
 
 @bot.message_handler(commands=['info'])
@@ -210,10 +206,10 @@ if HEROKU:
     db.init_db()
     sched = BackgroundScheduler(deamon=True)
     sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
-                  day='*', week='*', day_of_week='1-5',
+                  day='*', week='*', day_of_week='0-5',
                   hour='7,13', minute='05', second=30)
     sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_w'], year='*', month='*',
-                  day='*', week='*', day_of_week='5',
+                  day='*', week='*', day_of_week='4',
                   hour='20', minute='5', second='10')
     sched.start()
 
@@ -228,7 +224,7 @@ if HEROKU:
         return render_template('index.html', content=[
             {'designation': 'Amount of all users', 'value': amount_all_usres},
             {'designation': 'Amount of active users', 'value': amount_active_usres},
-            {'designation': 'Present of russian user',
+            {'designation': 'Percentage of Russians user',
              'value': '{}%'.format(round(amount_russians_users / amount_all_usres * 100, 2))}
         ])
 
@@ -241,7 +237,6 @@ if HEROKU:
 
     @app.route('/{}'.format(TOKEN_TG), methods=['POST'])
     def get_message():
-        print("getMessage/token")
         bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
         return "?", 200
 
