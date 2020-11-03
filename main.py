@@ -92,8 +92,10 @@ def send_message_by_scheldier(command=''):
     get_heat_map(URL + switch_command(command)[0])
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
-            bot.send_photo(chat_id=chat_id[0], photo=image, caption='end of week' if command == '/SP500_w' else '')
-
+            try:
+                bot.send_photo(chat_id=chat_id[0], photo=image, caption='end of week' if command == '/SP500_w' else '')
+            except:
+                print("Can't send to {}".format(chat_id[0]))
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -207,7 +209,7 @@ if HEROKU:
     sched = BackgroundScheduler(deamon=True)
     sched.add_job(send_message_by_scheldier, 'cron', year='*', month='*',
                   day='*', week='*', day_of_week='0-4',
-                  hour='8,13', minute='05', second=30)
+                  hour='7,13', minute='05', second=30)
     sched.add_job(send_message_by_scheldier, 'cron', args=['/SP500_w'], year='*', month='*',
                   day='*', week='*', day_of_week='4',
                   hour='20', minute='5', second='10')
