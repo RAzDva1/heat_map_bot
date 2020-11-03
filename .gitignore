@@ -5,3 +5,4 @@ config_webhook.py
 *.log
 *.db
 __pycache__/
+heroku_commands.txt
