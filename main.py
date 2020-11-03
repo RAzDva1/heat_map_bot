@@ -10,6 +10,7 @@ import database_api as db
 import business_logic as bl
 import datetime
 from flask import render_template
+from telebot.apihelper import ApiException
 
 TOKEN_TG = os.getenv('TOKEN_TG')
 TOKEN_APP_HEROKU = os.getenv('TOKEN_APP_HEROKU', '')
@@ -94,8 +95,9 @@ def send_message_by_scheldier(command=''):
         with open("image.png", 'rb') as image:
             try:
                 bot.send_photo(chat_id=chat_id[0], photo=image, caption='end of week' if command == '/SP500_w' else '')
-            except:
+            except ApiException:
                 print("Can't send to {}".format(chat_id[0]))
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -160,8 +162,11 @@ def sp500_d(message):
     print("SW:", switch_command(message.text))
     get_heat_map(URL + switch_command(message.text)[0])
     with open("image.png", 'rb') as image:
-        bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 {}".
-                       format(switch_command(message.text)[1]))
+        try:
+            bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 {}".
+                           format(switch_command(message.text)[1]))
+        except ApiException:
+            print("Can't send to {}".format(message.chat.id))
 
 
 @bot.message_handler(commands=['SP500_tst_link'])
