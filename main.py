@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 import requests
 import time
 import database_api as db
-import business_logic as bl
+import config as bl
 import datetime
 from flask import render_template
 from telebot.apihelper import ApiException
@@ -19,10 +19,6 @@ CHROME_BINARY = os.getenv('CHROME_BINARY', '')
 CHROME_DRIVER_PATH = os.getenv('CHROME_DRIVER_PATH', '')
 
 URL = 'https://finviz.com/map.ashx'
-
-data = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
-                      'AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/50.0.2661.102 Safari/537.36'}
 
 bot = telebot.TeleBot(TOKEN_TG)
 
@@ -55,7 +51,7 @@ def get_heat_map(url):
     url_png = element.get_attribute("value")
     print(element.get_attribute("value"))
     driver.quit()
-    req = requests.get(url_png, headers=data)
+    req = requests.get(url_png, headers=bl.header)
     with open("image.png", 'wb') as image:
         image.write(req.content)
     return url_png
@@ -73,37 +69,26 @@ def get_heat_map_link(url):
     return url_png
 
 
-def switch_command(command):
-    return {
-        "/SP500_d": ['', 'today'],
-        "/SP500_w": ['?t=sec&st=w1', 'last week'],
-        "/SP500_1m": ['?t=sec&st=w4', 'last month'],
-        "/SP500_3m": ['?t=sec&st=w13', 'last three months'],
-        "/SP500_6m": ['?t=sec&st=w26', 'last six months'],
-        "/SP500_1y": ['?t=sec&st=w52', 'last year'],
-        "/SP500_ytd": ['?t=sec&st=ytd', 'year to date']
-    }.get(command, ['', 'today'])
-
-
 def send_message_by_scheldier(command=''):
     print("Schediler")
     print(command)
     list_chat_id = db.select_users_for_mail()
     print(list_chat_id)
-    get_heat_map(URL + switch_command(command)[0])
+    get_heat_map(URL + bl.switch_command(command)[0])
     for chat_id in list_chat_id:
         with open("image.png", 'rb') as image:
             try:
                 bot.send_photo(chat_id=chat_id[0], photo=image, caption='end of week' if command == '/SP500_w' else '')
             except ApiException:
                 print("Can't send to {}".format(chat_id[0]))
+                db.change_state_email(user_id=chat_id[0], is_mailing=False)
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
     db.add_user(user_id=message.chat.id, lang_code=message.from_user.language_code,
                 first_name=message.from_user.first_name)
-    keyboard = bl.create_keyboard_is_photo()
+    keyboard = bl.create_keyboard_is_mail()
     bot.send_message(chat_id=message.chat.id, text="Okay, do you want to receive daily email at 10.05 am, "
                                                    "4.05 pm and in Friday at 23.05 pm (week frame)",
                      reply_markup=keyboard)
@@ -129,20 +114,6 @@ def stop(message):
     bot.send_message(chat_id=message.chat.id, text="Ok, now we won't send you HeatMap")
 
 
-TEXT_HELP = "I can execute several commands: \n" \
-            "/SP500_d - S&P500 today \n" \
-            "/SP500_w - S&P500 last week \n" \
-            "/SP500_1m - S&P500 last month \n" \
-            "/SP500_3m - S&P500 last 3 months\n" \
-            "/SP500_6m - S&P500 last 6 months\n" \
-            "/SP500_1y - S&P500 last year\n" \
-            "/SP500_ytd - S&P500 year to date\n" \
-            "/help - commands list\n" \
-            "/start - start sending daily HeatMap\n" \
-            "/stop - stop sending daily HeatMap\n" \
-            "/info - better do not touch it:)"
-
-
 @bot.message_handler(commands=['info'])
 def info(message):
     text = "Ok, you can send me you suggestions about improving this bot.\n" \
@@ -154,19 +125,20 @@ def info(message):
 
 @bot.message_handler(commands=['help'])
 def help_f(message):
-    bot.send_message(chat_id=message.chat.id, text=TEXT_HELP)
+    bot.send_message(chat_id=message.chat.id, text=bl.TEXT_HELP)
 
 
 @bot.message_handler(commands=['SP500_d', 'SP500_w', 'SP500_1m', 'SP500_3m', 'SP500_6m', 'SP500_1y', 'SP500_ytd'])
 def sp500_d(message):
-    print("SW:", switch_command(message.text))
-    get_heat_map(URL + switch_command(message.text)[0])
+    print("SW:", bl.switch_command(message.text))
+    get_heat_map(URL + bl.switch_command(message.text)[0])
     with open("image.png", 'rb') as image:
         try:
             bot.send_photo(chat_id=message.chat.id, photo=image, caption="SP500 {}".
-                           format(switch_command(message.text)[1]))
+                           format(bl.switch_command(message.text)[1]))
         except ApiException:
             print("Can't send to {}".format(message.chat.id))
+            db.change_state_email(user_id=message.chat.id, is_mailing=False)
 
 
 @bot.message_handler(commands=['SP500_tst_link'])
@@ -281,15 +253,3 @@ else:
         sched.start()
         bot.remove_webhook()
         bot.polling()
-
-# TODO
-''' 
-American stocks exchange open at 16:00 (Moscow) and close at 23:00
-HeatMap, [26.10.20 20:14]
-[In reply to Valentin]
-I try to make 20 requests send link. 7.6293 is mean of 1 request
-
-HeatMap, [26.10.20 20:14]
-[In reply to Valentin]
-I try to make 20 requests save image. 7.439 is mean of 1 request and save
-'''
